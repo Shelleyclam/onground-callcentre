@@ -3,7 +3,7 @@
 A rebuild of the On-Ground.ai Call Centre app, with **real phone calls**: human-to-human through Twilio, and AI-to-human through Twilio speech recognition with Gemini.
 
 - **Live:** https://onground-callcentre.vercel.app
-- **Demo video:** _link in the submission email_
+- **Demo video (real call):** https://www.loom.com/share/e3884c7b84df4a9da05b133a6201c252
 
 > **Calling on the live link is limited by design.** The server dials only numbers on its own allowlist. On this Twilio trial, that's my verified phone. A visitor can click **Place call**, but it can only ring my phone, a few times per 10 minutes.
 
