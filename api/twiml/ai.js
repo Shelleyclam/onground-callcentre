@@ -2,7 +2,7 @@
 // Twilio fetches this URL when the call is answered, and again each time the customer finishes speaking
 // (<Gather input="speech"> turns their speech into text and sends it here as SpeechResult).
 // We keep the conversation so far in the URL itself (?h=...), so no database is needed.
-import { isFromTwilio, xml } from '../_lib/twilio.js';
+import { isFromTwilio, xml, baseUrl } from '../_lib/twilio.js';
 import { nextLine } from '../_lib/gemini.js';
 import { outgoing } from '../../src/data/mock.js';
 
@@ -51,13 +51,14 @@ export default async function handler(req, res) {
   line = line.replace('[END]', '').trim();
   if (heard || !history.length) history.push({ role: 'ai', text: line });
 
-  const next = `/api/twiml/ai?lead=${lead.id}&amp;h=${encode(history)}`;
+  // Full https URLs: the trial proxies every URL in our TwiML and rejects relative ones.
+  const next = `${baseUrl(req)}/api/twiml/ai?lead=${lead.id}&amp;h=${encode(history)}`;
   const nextIfSilent = `${next}&amp;silent=1`;
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   ${end
     ? `<Say>${xml(line)}</Say><Hangup/>`
-    : `<Gather input="speech" language="en-IN" speechTimeout="auto" action="${next}"><Say>${xml(line)}</Say></Gather>
+    : `<Gather input="speech" action="${next}"><Say>${xml(line)}</Say></Gather>
   <Redirect>${nextIfSilent}</Redirect>`}
 </Response>`;
   console.log(JSON.stringify({ step: 'reply', totalMs: Date.now() - started, twiml }));
