@@ -9,7 +9,8 @@ export default async function handler(req, res) {
 
   const agent = process.env.AGENT_PHONE;
   const customer = process.env.CUSTOMER_PHONE;
-  if (!isAllowed(agent) || !isAllowed(customer)) {
+  // CUSTOMER_PHONE may be left empty while testing: then only the agent's phone rings.
+  if (!isAllowed(agent) || (customer && !isAllowed(customer))) {
     return res.status(403).json({ error: 'Calling is not configured for these numbers.' });
   }
 
@@ -25,8 +26,8 @@ export default async function handler(req, res) {
 
     // Agent first, so the agent is already in the room when the customer picks up.
     const agentCall = await ring(agent, 'agent');
-    const customerCall = await ring(customer, 'customer');
-    res.status(200).json({ calls: [agentCall.sid, customerCall.sid] });
+    const customerCall = customer ? await ring(customer, 'customer') : null;
+    res.status(200).json({ calls: [agentCall.sid, customerCall?.sid].filter(Boolean) });
   } catch (err) {
     console.error(err);
     res.status(502).json({ error: err.message });

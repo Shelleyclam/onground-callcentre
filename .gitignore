@@ -7,3 +7,6 @@ dist/
 reference/
 .vscode/
 .vercel/
+
+.vercel
+.env*
