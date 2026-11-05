@@ -11,6 +11,7 @@ export default function CallPanel({ call, finished, onClose }) {
   const live = call.legs.length > 0 && call.legs.every((l) => l.status === 'in-progress');
   const status = call.error ? 'Could not place call'
     : finished ? 'Call ended'
+    : call.practise ? (live ? 'Practice live: handle the AI customer' : call.sids.length ? 'AI customer is ringing you…' : 'Starting…')
     : live ? (call.ai ? 'Live: AI advisor is talking to the customer' : customer ? 'Live: you and the customer are connected' : 'Live: your phone is connected')
     : call.sids.length ? (call.ai ? 'AI advisor is ringing the customer…' : 'Ringing your phone…') : 'Starting…';
 
@@ -29,13 +30,13 @@ export default function CallPanel({ call, finished, onClose }) {
 
       {call.legs.length > 0 && (
         <div className="legs">
-          <div className="leg"><span>{call.ai ? 'Customer (AI call)' : 'Your phone'}</span><span>{label[agent?.status] ?? '…'}</span></div>
+          <div className="leg"><span>{call.practise ? 'Your phone (practice)' : call.ai ? 'Customer (AI call)' : 'Your phone'}</span><span>{label[agent?.status] ?? '…'}</span></div>
           {customer && <div className="leg"><span>Customer</span><span>{label[customer.status] ?? '…'}{customer.duration ? ` · ${customer.duration}s` : ''}</span></div>}
         </div>
       )}
 
       {!finished && !call.error && (
-        <p className="hint">{call.ai ? 'The AI greets, listens and replies. It ends the call itself, or hang up on the phone.' : 'Answer on your phone. Hang up there to end the call.'}</p>
+        <p className="hint">{call.practise ? 'Answer and handle the customer. At the end you get a coaching tip.' : call.ai ?'The AI greets, listens and replies. It ends the call itself, or hang up on the phone.' : 'Answer on your phone. Hang up there to end the call.'}</p>
       )}
     </div>
   );

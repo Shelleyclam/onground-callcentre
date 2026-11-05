@@ -1,6 +1,7 @@
 // Everything about a real phone call, in one hook.
 // start(lead)              -> asks our backend to ring the agent's and customer's phones
 // start(lead, { leadId })  -> AI call: an AI advisor phones the customer instead
+// start(title, { practise }) -> practice: an AI customer phones the agent
 // then it checks the status every 2 seconds until the phones have hung up.
 import { useEffect, useState } from 'react';
 
@@ -9,14 +10,14 @@ const DONE = ['completed', 'busy', 'failed', 'no-answer', 'canceled'];
 export function useCall() {
   const [call, setCall] = useState(null); // { lead, ai, sids, legs, error }
 
-  async function start(lead, { leadId } = {}) {
-    const ai = Boolean(leadId);
-    setCall({ lead, ai, sids: [], legs: [], error: null });
+  async function start(lead, { leadId, practise } = {}) {
+    const ai = Boolean(leadId || practise);
+    setCall({ lead, ai, practise: Boolean(practise), sids: [], legs: [], error: null });
     try {
       const res = await fetch(ai ? '/api/ai-call' : '/api/call', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(ai ? { leadId } : { lead }),
+        body: JSON.stringify(ai ? { leadId, practise } : { lead }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Call failed');

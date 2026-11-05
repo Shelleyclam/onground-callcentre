@@ -1,7 +1,7 @@
 // Plan: Calls to make (ranked, expandable, paged), Incoming (missed calls), Recent (call log).
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Phone, PhoneMissed, PhoneIncoming, PhoneOutgoing, Sparkles } from 'lucide-react';
-import { outgoing, missed, recent, rupees } from '../data/mock.js';
+import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Phone, PhoneMissed, PhoneIncoming, PhoneOutgoing, Sparkles, Mic } from 'lucide-react';
+import { outgoing, missed, recent, practiceScenarios, rupees } from '../data/mock.js';
 
 const PAGE_SIZE = 2;
 const initials = (name) => name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
@@ -65,7 +65,75 @@ function CallsToMake({ onCall, calling }) {
   );
 }
 
+// Call back: a short prep screen before returning a missed call.
+function CallBack({ m, onCall, calling, onBack }) {
+  const lead = outgoing.find((l) => l.name === m.name);
+  const opener = lead
+    ? `Hi ${m.name.split(' ')[0]}, this is Arvind from The Sleep Company returning your call. You were looking at the ${lead.product}. Is now a good time?`
+    : 'Hi, this is Arvind from The Sleep Company returning your call. How can I help you today?';
+  return (
+    <>
+      <button className="link" onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 10 }}><ChevronLeft size={15} /> Missed calls</button>
+      <div className="card" style={{ padding: 14 }}>
+        <div className="row" style={{ padding: 0 }}>
+          <div className="round" style={{ background: 'var(--red-bg)', color: 'var(--red)' }}><PhoneMissed size={16} /></div>
+          <div className="grow">
+            <div className="title">Call back {m.name}</div>
+            <div className="muted">Missed {m.when} · {m.note}</div>
+          </div>
+          {m.expected && <span className="money">{rupees(m.expected)} at stake</span>}
+        </div>
+        <div className="expand" style={{ padding: '12px 0 0', marginTop: 12 }}>
+          {lead ? (
+            <>
+              <div><div className="section-label" style={{ margin: '0 0 4px' }}>What we know</div><div>{lead.story}</div></div>
+              <div className="grid-2" style={{ gap: 8 }}>
+                <div className="kv"><div className="k">Interested in</div><div className="v">{lead.product}</div></div>
+                <div className="kv"><div className="k">Cross-sell</div><div className="v">{lead.crossSell}</div></div>
+              </div>
+            </>
+          ) : <div className="muted">No prior record. Find out who they are and what they need, then log a lead.</div>}
+          <div className="kv warn"><div className="k">Suggested opener</div><div>"{opener}"</div></div>
+          <div className="call-actions">
+            <button className="btn btn-primary" onClick={() => onCall(m.name)} disabled={calling}><Phone size={15} /> {calling ? 'Call in progress…' : 'Call back now'}</button>
+            {lead && <button className="btn btn-ai" onClick={() => onCall(m.name, { leadId: lead.id })} disabled={calling}><Sparkles size={15} /> AI call</button>}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// Practise a call: pick a scenario; an AI customer phones you and you handle the conversation.
+function Practise({ onCall, calling }) {
+  const levelColor = { Easy: 'var(--green)', Medium: 'var(--amber)', Hard: 'var(--red)' };
+  return (
+    <>
+      <div className="plan-head">
+        <div className="title">Practise a call</div>
+        <div className="muted">Pick a scenario. An AI customer calls your phone, you handle it, and you get a coaching tip at the end.</div>
+      </div>
+      <div className="list">
+        {practiceScenarios.map((s) => (
+          <div className="card row" key={s.id}>
+            <div className="round" style={{ background: '#f1ebfb', color: 'var(--purple)' }}><Mic size={16} /></div>
+            <div className="grow">
+              <div className="title">{s.title} <span style={{ color: levelColor[s.level], fontSize: 11, fontWeight: 700, marginLeft: 4 }}>{s.level.toUpperCase()}</span></div>
+              <div className="muted ellipsis">{s.sub}</div>
+            </div>
+            <button className="btn btn-ai btn-small" onClick={() => onCall(`Practice: ${s.title}`, { practise: s.id })} disabled={calling}>
+              <Phone size={12} /> Start
+            </button>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
 function Incoming({ onCall, calling }) {
+  const [callback, setCallback] = useState(null);
+  if (callback) return <CallBack m={callback} onCall={onCall} calling={calling} onBack={() => setCallback(null)} />;
   const atStake = missed.reduce((sum, m) => sum + (m.expected ?? 0), 0);
   return (
     <>
@@ -87,7 +155,7 @@ function Incoming({ onCall, calling }) {
             </div>
             <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
               <span className="money">{m.expected ? `${rupees(m.expected)} expected` : <span className="muted">New contact</span>}</span>
-              <button className="btn btn-primary btn-small" onClick={() => onCall(m.name)} disabled={calling}><Phone size={12} /> Call back</button>
+              <button className="btn btn-primary btn-small" onClick={() => setCallback(m)}><Phone size={12} /> Call back</button>
             </div>
           </div>
         ))}
@@ -152,7 +220,7 @@ export default function Plan({ tab, onCall, calling }) {
         {tab === 'outgoing' && <CallsToMake onCall={onCall} calling={calling} />}
         {tab === 'incoming' && <Incoming onCall={onCall} calling={calling} />}
         {tab === 'recent' && <Recent />}
-        {tab === 'practise' && <div className="card row muted">Practise a call: coming soon.</div>}
+        {tab === 'practise' && <Practise onCall={onCall} calling={calling} />}
       </div>
     </>
   );

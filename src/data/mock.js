@@ -131,3 +131,16 @@ export const needsInput = {
 };
 
 export const rupees = (n) => `₹${n.toLocaleString('en-IN')}`;
+
+// Practise a call: the AI plays a customer and phones the agent, who practises the conversation.
+export const practiceScenarios = [
+  { id: 'price', title: 'Price objection', sub: 'Customer thinks the mattress is too expensive', level: 'Medium',
+    opener: 'Hello? Yes, I tried the Smart Luxe at your store, but honestly it is too expensive for me.',
+    persona: 'You are Meena, a customer who liked the Smart Luxe Mattress (₹13,390) but thinks it is too expensive. You are polite but hesitant. Only warm up if the agent mentions EMI, the 100-night trial, or value for money.' },
+  { id: 'billing', title: 'Billing dispute', sub: 'Charged twice for an order, upset', level: 'Hard',
+    opener: 'Hi, I was charged twice for my order and nobody has fixed it. This is really frustrating.',
+    persona: 'You are Priya, an upset customer charged twice for an Ortho Mattress order. You want a clear refund timeline. Calm down only if the agent apologises, shows empathy and gives specific next steps.' },
+  { id: 'upgrade', title: 'Plan upgrade enquiry', sub: 'Friendly customer, cross-sell chance', level: 'Easy',
+    opener: 'Hello! I bought a pillow last month and I am thinking of getting a new mattress too.',
+    persona: 'You are Suresh, a friendly repeat customer considering a new mattress. You are open to suggestions and will accept an add-on like a mattress protector if the agent offers it well.' },
+];
