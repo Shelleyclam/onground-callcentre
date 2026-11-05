@@ -11,8 +11,8 @@ export default function CallPanel({ call, finished, onClose }) {
   const live = call.legs.length > 0 && call.legs.every((l) => l.status === 'in-progress');
   const status = call.error ? 'Could not place call'
     : finished ? 'Call ended'
-    : live ? (customer ? 'Live: you and the customer are connected' : 'Live: your phone is connected')
-    : call.sids.length ? 'Ringing your phone…' : 'Starting…';
+    : live ? (call.ai ? 'Live: AI advisor is talking to the customer' : customer ? 'Live: you and the customer are connected' : 'Live: your phone is connected')
+    : call.sids.length ? (call.ai ? 'AI advisor is ringing the customer…' : 'Ringing your phone…') : 'Starting…';
 
   return (
     <div className="call-panel" role="status">
@@ -29,12 +29,14 @@ export default function CallPanel({ call, finished, onClose }) {
 
       {call.legs.length > 0 && (
         <div className="legs">
-          <div className="leg"><span>Your phone</span><span>{label[agent?.status] ?? '…'}</span></div>
+          <div className="leg"><span>{call.ai ? 'Customer (AI call)' : 'Your phone'}</span><span>{label[agent?.status] ?? '…'}</span></div>
           {customer && <div className="leg"><span>Customer</span><span>{label[customer.status] ?? '…'}{customer.duration ? ` · ${customer.duration}s` : ''}</span></div>}
         </div>
       )}
 
-      {!finished && !call.error && <p className="hint">Answer on your phone. Hang up there to end the call.</p>}
+      {!finished && !call.error && (
+        <p className="hint">{call.ai ? 'The AI greets, listens and replies. It ends the call itself, or hang up on the phone.' : 'Answer on your phone. Hang up there to end the call.'}</p>
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 // Plan: Calls to make (ranked, expandable, paged), Incoming (missed calls), Recent (call log).
 import { useState } from 'react';
-import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Phone, PhoneMissed, PhoneIncoming, PhoneOutgoing } from 'lucide-react';
+import { ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Phone, PhoneMissed, PhoneIncoming, PhoneOutgoing, Sparkles } from 'lucide-react';
 import { outgoing, missed, recent, rupees } from '../data/mock.js';
 
 const PAGE_SIZE = 2;
@@ -43,9 +43,14 @@ function CallsToMake({ onCall, calling }) {
                   <div className="kv"><div className="k">Cross-sell</div><div className="v">{l.crossSell}</div></div>
                 </div>
                 <div className="kv warn"><div className="k">EMI / financing</div><div>{l.emi}</div></div>
-                <button className="btn btn-primary" onClick={() => onCall(l.name)} disabled={calling}>
-                  <Phone size={15} /> {calling ? 'Call in progress…' : 'Place call'}
-                </button>
+                <div className="call-actions">
+                  <button className="btn btn-primary" onClick={() => onCall(l.name)} disabled={calling}>
+                    <Phone size={15} /> {calling ? 'Call in progress…' : 'Place call'}
+                  </button>
+                  <button className="btn btn-ai" onClick={() => onCall(l.name, { leadId: l.id })} disabled={calling} title="An AI advisor calls the customer for you">
+                    <Sparkles size={15} /> AI call
+                  </button>
+                </div>
               </div>
             )}
           </div>

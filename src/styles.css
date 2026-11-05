@@ -176,3 +176,6 @@ h1, h2, h3, p { margin: 0; }
 .signals-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; margin-top: 12px; padding: 8px 0; font-weight: 700; font-size: 13px; border-top: 1px solid var(--line); }
 .signals { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
 .call-panel .hint { color: #a9c9bd; font-size: 12px; margin-top: 10px; }
+.call-actions { display: grid; grid-template-columns: 2fr 1fr; gap: 8px; }
+.btn-ai { background: #f1ebfb; color: var(--purple); border: 1px solid #ddd0f3; }
+.btn-ai:disabled { opacity: .6; cursor: default; }
