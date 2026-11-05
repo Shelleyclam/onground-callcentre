@@ -2,8 +2,8 @@
 // Both phones join the same conference room, so the agent and customer can talk.
 import { isFromTwilio, xml } from '../_lib/twilio.js';
 
-export default function handler(req, res) {
-  if (!isFromTwilio(req)) return res.status(403).send('Forbidden');
+export default async function handler(req, res) {
+  if (!(await isFromTwilio(req))) return res.status(403).send('Forbidden');
 
   const { who, lead } = req.query;
   const greeting = who === 'agent'

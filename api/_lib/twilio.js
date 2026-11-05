@@ -24,16 +24,25 @@ export function baseUrl(req) {
   return `https://${req.headers['x-forwarded-host'] ?? req.headers.host}`;
 }
 
-// Twilio signs every webhook it sends. We recompute the signature with our auth token;
-// if it matches, the request really came from Twilio (and not from someone guessing our URL).
-export function isFromTwilio(req) {
-  const given = req.headers['x-twilio-signature'];
-  if (!given) return false;
-  const url = baseUrl(req) + req.url;
+// Is this request really from Twilio, about one of our calls?
+// 1) Normally Twilio signs each request with our auth token; we recompute the signature and compare.
+// 2) On trial accounts Twilio fetches through a proxy that sends NO signature. Then we take the
+//    CallSid it sent and look it up in our own account: only a real, live call of ours passes.
+export async function isFromTwilio(req) {
   const params = req.body && typeof req.body === 'object' ? req.body : {};
-  const data = url + Object.keys(params).sort().map((k) => k + params[k]).join('');
-  const expected = crypto.createHmac('sha1', token()).update(data).digest('base64');
-  return given.length === expected.length && crypto.timingSafeEqual(Buffer.from(given), Buffer.from(expected));
+  const given = req.headers['x-twilio-signature'];
+  if (given) {
+    const data = baseUrl(req) + req.url + Object.keys(params).sort().map((k) => k + params[k]).join('');
+    const expected = crypto.createHmac('sha1', token()).update(data).digest('base64');
+    return given.length === expected.length && crypto.timingSafeEqual(Buffer.from(given), Buffer.from(expected));
+  }
+  if (params.AccountSid !== sid() || !/^CA[0-9a-f]{32}$/.test(params.CallSid ?? '')) return false;
+  try {
+    const call = await twilio(`/Calls/${params.CallSid}.json`);
+    return ['ringing', 'in-progress'].includes(call.status);
+  } catch {
+    return false;
+  }
 }
 
 // Only numbers listed in ALLOWED_NUMBERS (comma separated) can ever be dialled.
