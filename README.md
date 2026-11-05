@@ -43,6 +43,8 @@ Both legs join one conference, so the two people talk.
 Browser polls /api/call-status every 2s and shows Ringing / Connected / Ended.
 ```
 
+**Tested so far:** the agent leg, live on my phone (greeting, then waiting in the conference). This trial allows only one verified number, and adding a second requires a paid upgrade, so the customer leg hasn't been tested on a real phone. To enable it, set `CUSTOMER_PHONE` and add it to `ALLOWED_NUMBERS`; no code changes are needed.
+
 The agent uses their own phone. This is a common click-to-call pattern, and it's what the Twilio trial allows: browser calling and `<Dial><Number>` are both blocked on trial.
 
 ### AI-to-human: a turn-by-turn conversation
@@ -75,6 +77,7 @@ When a callback time is agreed, the AI says goodbye ──▶ <Hangup/>
 | Call connects, silence | Trial rejects some TwiML (relative URLs, `Dial timeLimit`) | Absolute URLs, minimal attributes |
 | "Please check your URL" | Trial webhooks arrive unsigned, so signature check failed | Live-call lookup (above) |
 | End call does nothing | Trial blocks updating calls and kicking participants | Removed the button; hang up on the phone |
+| Can't add a second verified number | Trial allows one verified number | Customer leg is one setting away (`CUSTOMER_PHONE`) |
 
 ## Stack, and why
 
