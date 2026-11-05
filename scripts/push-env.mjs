@@ -10,7 +10,7 @@ const env = Object.fromEntries(
     .map((line) => [line.slice(0, line.indexOf('=')), line.slice(line.indexOf('=') + 1).trim()]),
 );
 
-const keys = ['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_FROM', 'AGENT_PHONE', 'CUSTOMER_PHONE', 'ALLOWED_NUMBERS', 'ANTHROPIC_API_KEY'];
+const keys = ['TWILIO_ACCOUNT_SID', 'TWILIO_AUTH_TOKEN', 'TWILIO_FROM', 'AGENT_PHONE', 'CUSTOMER_PHONE', 'ALLOWED_NUMBERS', 'GEMINI_API_KEY'];
 
 for (const key of keys) {
   if (!env[key]) { console.log(`${key}: empty, skipped`); continue; }
