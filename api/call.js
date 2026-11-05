@@ -22,7 +22,8 @@ export default async function handler(req, res) {
     // Lead name is only used for the spoken greeting. Keep it short and plain.
     const lead = String(req.body?.lead ?? 'your customer').replace(/[^\p{L}\p{N} .'-]/gu, '').slice(0, 40);
     const twimlUrl = (who) => `${baseUrl(req)}/api/twiml/conference?who=${who}&lead=${encodeURIComponent(lead)}`;
-    const ring = (to, who) => twilio('/Calls.json', { To: to, From: process.env.TWILIO_FROM, Url: twimlUrl(who) }) // trial accounts reject extras like Timeout;
+    // Only To, From and Url: trial accounts reject extra settings such as Timeout.
+    const ring = (to, who) => twilio('/Calls.json', { To: to, From: process.env.TWILIO_FROM, Url: twimlUrl(who) });
 
     // Agent first, so the agent is already in the room when the customer picks up.
     const agentCall = await ring(agent, 'agent');
