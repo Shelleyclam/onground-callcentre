@@ -32,20 +32,24 @@ export default async function handler(req, res) {
 
   let line;
   let end = false;
+  let retry = false; // true when we only ask them to repeat (nothing new to remember)
+  const silences = Number(req.query.silent ?? 0);
   if (!history.length) {
     // First turn: a fixed greeting, so the call starts instantly.
     line = `Hi ${lead.name.split(' ')[0]}, this is Avani from The Sleep Company. You tried our ${lead.product} recently. Is this a good time for a quick chat?`;
   } else if (!heard) {
-    // Silence. Ask once more; if it happens again, end politely.
-    end = req.query.silent === '1';
+    // Silence (Twilio heard nothing). Ask again once; on the second silence, end politely.
+    end = silences >= 2;
     line = end ? "I'll let you go for now. An advisor will call you back. Goodbye!" : "Sorry, I didn't catch that. Could you say it again?";
   } else {
     try {
       line = await nextLine(persona(lead), history);
     } catch (err) {
-      console.error(err);
-      line = "Sorry, I'm having trouble on my side. An advisor will call you back shortly. Goodbye!";
-      end = true;
+      // Both models were too slow or failed. Don't hang up: ask them to repeat, like on a bad line.
+      console.error(err.errors ?? err);
+      history.pop();
+      retry = true;
+      line = 'Sorry, I missed that. Could you say it once more?';
     }
   }
   const asksQuestion = line.replace('[END]', '').trim().endsWith('?');
@@ -55,11 +59,11 @@ export default async function handler(req, res) {
     line = 'Thanks so much for your time. One of our advisors will call you back soon. Goodbye!';
   }
   line = line.replace('[END]', '').trim();
-  if (heard || !history.length) history.push({ role: 'ai', text: line });
+  if ((heard && !retry) || !history.length) history.push({ role: 'ai', text: line });
 
   // Full https URLs: the trial proxies every URL in our TwiML and rejects relative ones.
   const next = `${baseUrl(req)}/api/twiml/ai?lead=${lead.id}&amp;h=${encode(history)}`;
-  const nextIfSilent = `${next}&amp;silent=1`;
+  const nextIfSilent = `${next}&amp;silent=${heard ? 1 : silences + 1}`;
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   ${end

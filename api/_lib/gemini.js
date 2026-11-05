@@ -1,12 +1,10 @@
 // Ask Google Gemini (AI Studio API) for the AI caller's next line.
-// Model choice: a "flash-lite" model answers in ~1.5s. A phone call can't wait long:
-// Twilio gives our server about 5 seconds to reply each turn.
-const MODEL = 'gemini-3.1-flash-lite';
-const URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+// A phone call can't wait: Twilio gives our server ~5 seconds per turn. The free tier is usually
+// ~1s but sometimes slow, so we ask two fast "flash-lite" models at once and use the first answer.
+const MODELS = ['gemini-3.1-flash-lite', 'gemini-flash-lite-latest'];
 
-// system: who the AI is. history: [{ role: 'ai' | 'customer', text }]
-export async function nextLine(system, history) {
-  const res = await fetch(URL, {
+async function ask(model, system, history) {
+  const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
     body: JSON.stringify({
@@ -14,9 +12,15 @@ export async function nextLine(system, history) {
       contents: history.map((m) => ({ role: m.role === 'ai' ? 'model' : 'user', parts: [{ text: m.text }] })),
       generationConfig: { maxOutputTokens: 120, temperature: 0.6 },
     }),
-    signal: AbortSignal.timeout(4000), // give up before Twilio does, so we can still say sorry
+    signal: AbortSignal.timeout(3500), // give up before Twilio does, so we can still speak
   });
   const body = await res.json();
-  if (!res.ok) throw new Error(`Gemini ${res.status}: ${body.error?.message ?? 'request failed'}`);
-  return body.candidates?.[0]?.content?.parts?.map((p) => p.text).join('').trim() ?? '';
+  const text = body.candidates?.[0]?.content?.parts?.map((p) => p.text).join('').trim();
+  if (!res.ok || !text) throw new Error(`Gemini ${model} ${res.status}: ${body.error?.message ?? 'empty reply'}`);
+  return text;
+}
+
+// system: who the AI is. history: [{ role: 'ai' | 'customer', text }]
+export function nextLine(system, history) {
+  return Promise.any(MODELS.map((m) => ask(m, system, history)));
 }
