@@ -1,13 +1,18 @@
 // Floating panel that shows a live call: who we're calling and each phone's status.
-import { Phone, PhoneOff, X } from 'lucide-react';
+// There is no "End call" button: Twilio trial accounts can't hang up a call remotely,
+// so the call ends when someone hangs up their phone (or after 10 minutes).
+import { Phone, X } from 'lucide-react';
 
 const label = { queued: 'Dialling…', initiated: 'Dialling…', ringing: 'Ringing…', 'in-progress': 'Connected', completed: 'Ended', busy: 'Busy', failed: 'Failed', 'no-answer': 'No answer', canceled: 'Cancelled' };
 
-export default function CallPanel({ call, finished, onHangUp, onClose }) {
+export default function CallPanel({ call, finished, onClose }) {
   if (!call) return null;
   const [agent, customer] = call.legs;
-  const live = customer?.status === 'in-progress' && agent?.status === 'in-progress';
-  const status = call.error ? 'Could not place call' : finished ? 'Call ended' : live ? 'Live: you and the customer are connected' : call.sids.length ? 'Ringing both phones…' : 'Starting…';
+  const live = call.legs.length > 0 && call.legs.every((l) => l.status === 'in-progress');
+  const status = call.error ? 'Could not place call'
+    : finished ? 'Call ended'
+    : live ? (customer ? 'Live: you and the customer are connected' : 'Live: your phone is connected')
+    : call.sids.length ? 'Ringing your phone…' : 'Starting…';
 
   return (
     <div className="call-panel" role="status">
@@ -25,15 +30,11 @@ export default function CallPanel({ call, finished, onHangUp, onClose }) {
       {call.legs.length > 0 && (
         <div className="legs">
           <div className="leg"><span>Your phone</span><span>{label[agent?.status] ?? '…'}</span></div>
-          <div className="leg"><span>Customer</span><span>{label[customer?.status] ?? '…'}{customer?.duration ? ` · ${customer.duration}s` : ''}</span></div>
+          {customer && <div className="leg"><span>Customer</span><span>{label[customer.status] ?? '…'}{customer.duration ? ` · ${customer.duration}s` : ''}</span></div>}
         </div>
       )}
 
-      {!finished && !call.error && (
-        <button className="btn btn-danger" style={{ width: '100%' }} onClick={onHangUp} disabled={!call.sids.length}>
-          <PhoneOff size={15} /> End call
-        </button>
-      )}
+      {!finished && !call.error && <p className="hint">Answer on your phone. Hang up there to end the call.</p>}
     </div>
   );
 }

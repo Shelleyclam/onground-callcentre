@@ -1,6 +1,6 @@
 // Everything about a real phone call, in one hook.
 // start(lead)  -> asks our backend to ring the agent's and customer's phones
-// then it checks the status every 2 seconds until both phones have hung up.
+// then it checks the status every 2 seconds until the phones have hung up.
 import { useEffect, useState } from 'react';
 
 const DONE = ['completed', 'busy', 'failed', 'no-answer', 'canceled'];
@@ -24,16 +24,6 @@ export function useCall() {
     }
   }
 
-  async function hangUp() {
-    if (call?.sids.length) {
-      await fetch('/api/call-status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sids: call.sids }),
-      });
-    }
-  }
-
   // Poll the status of both phone legs while the call is live.
   const sids = call?.sids.join(',');
   const finished = call?.legs.length > 0 && call.legs.every((l) => DONE.includes(l.status));
@@ -49,5 +39,5 @@ export function useCall() {
     return () => clearInterval(timer);
   }, [sids, finished]);
 
-  return { call, finished, start, hangUp, close: () => setCall(null) };
+  return { call, finished, start, close: () => setCall(null) };
 }

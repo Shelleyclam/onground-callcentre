@@ -74,7 +74,7 @@ export default function App() {
         {screen === 'pulse' && <Pulse />}
       </div>
 
-      <CallPanel call={phone.call} finished={phone.finished} onHangUp={phone.hangUp} onClose={phone.close} />
+      <CallPanel call={phone.call} finished={phone.finished} onClose={phone.close} />
     </div>
   );
 }
