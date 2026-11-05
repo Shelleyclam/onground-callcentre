@@ -4,7 +4,10 @@
 import { isFromTwilio, xml } from '../_lib/twilio.js';
 
 export default async function handler(req, res) {
-  if (!(await isFromTwilio(req))) return res.status(403).send('Forbidden');
+  const started = Date.now();
+  const ok = await isFromTwilio(req);
+  console.log(JSON.stringify({ step: 'verify', ok, ms: Date.now() - started, speech: Boolean(req.body?.SpeechResult) }));
+  if (!ok) return res.status(403).send('Forbidden');
 
   const { who, lead } = req.query;
   const greeting = who === 'agent'

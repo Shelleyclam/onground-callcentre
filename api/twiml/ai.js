@@ -19,7 +19,10 @@ If they want to stop, or a callback time is agreed, say a short goodbye and end 
 }
 
 export default async function handler(req, res) {
-  if (!(await isFromTwilio(req))) return res.status(403).send('Forbidden');
+  const started = Date.now();
+  const ok = await isFromTwilio(req);
+  console.log(JSON.stringify({ step: 'verify', ok, ms: Date.now() - started, speech: Boolean(req.body?.SpeechResult) }));
+  if (!ok) return res.status(403).send('Forbidden');
 
   const lead = outgoing.find((l) => l.id === Number(req.query.lead)) ?? outgoing[0];
   const history = decode(req.query.h ?? '');
@@ -50,12 +53,14 @@ export default async function handler(req, res) {
 
   const next = `/api/twiml/ai?lead=${lead.id}&amp;h=${encode(history)}`;
   const nextIfSilent = `${next}&amp;silent=1`;
-  res.setHeader('Content-Type', 'text/xml');
-  res.send(`<?xml version="1.0" encoding="UTF-8"?>
+  const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   ${end
     ? `<Say>${xml(line)}</Say><Hangup/>`
     : `<Gather input="speech" language="en-IN" speechTimeout="auto" action="${next}"><Say>${xml(line)}</Say></Gather>
   <Redirect>${nextIfSilent}</Redirect>`}
-</Response>`);
+</Response>`;
+  console.log(JSON.stringify({ step: 'reply', totalMs: Date.now() - started, twiml }));
+  res.setHeader('Content-Type', 'text/xml');
+  res.send(twiml);
 }
