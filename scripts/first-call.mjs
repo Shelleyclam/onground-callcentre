@@ -15,7 +15,8 @@ if (!e164.test(from) || !e164.test(to)) {
 
 const base = `https://api.twilio.com/2010-04-01/Accounts/${sid}`;
 const auth = `Basic ${Buffer.from(`${sid}:${token}`).toString('base64')}`;
-const twiml = '<Response><Say voice="Polly.Aditi">Hello. This is a test call from the On-Ground call centre app.</Say><Pause length="1"/><Say voice="Polly.Aditi">Goodbye.</Say></Response>';
+// Trial accounts only accept Twilio's template call scripts.
+const twimlUrl = 'https://webhooks.twilio.com/v1/Voice/Template/voice_text_to_speech';
 
 async function twilio(path, options = {}) {
   const res = await fetch(`${base}${path}`, { ...options, headers: { Authorization: auth, ...options.headers } });
@@ -27,7 +28,7 @@ async function twilio(path, options = {}) {
 const call = await twilio('/Calls.json', {
   method: 'POST',
   headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  body: new URLSearchParams({ To: to, From: from, Twiml: twiml }),
+  body: new URLSearchParams({ To: to, From: from, Url: twimlUrl }),
 });
 console.log(`Call created: ${call.sid}`);
 
