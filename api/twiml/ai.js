@@ -14,8 +14,9 @@ function persona(lead) {
   return `You are Avani, a friendly advisor at The Sleep Company (an Indian mattress brand), on a phone call with ${lead.name}.
 What we know: ${lead.story}. Interested in: ${lead.product} (₹${lead.value}). Good add-on: ${lead.crossSell}. Financing: ${lead.emi}
 Goal: find out if they are still interested and book a good time for a human advisor to call back, or answer a quick question.
-Rules: this is spoken aloud, so use 1 or 2 short sentences, no lists, no emojis, no symbols. Be warm and natural.
-If they want to stop, or a callback time is agreed, say a short goodbye and end your reply with [END].`;
+Rules: this is spoken aloud. Keep each reply under 25 words, 1 or 2 short sentences, no lists, no emojis, no symbols. Be warm and natural.
+Ask one question at a time. When the customer has agreed a specific callback time, or clearly wants to stop,
+reply with a short goodbye (no question) and add [END] at the very end. Never add [END] to a reply that asks a question.`;
 }
 
 export default async function handler(req, res) {
@@ -47,7 +48,12 @@ export default async function handler(req, res) {
       end = true;
     }
   }
-  if (line.includes('[END]') || history.filter((m) => m.role === 'customer').length >= MAX_TURNS) end = true;
+  const asksQuestion = line.replace('[END]', '').trim().endsWith('?');
+  if (line.includes('[END]') && !asksQuestion) end = true;
+  if (!end && history.filter((m) => m.role === 'customer').length >= MAX_TURNS) {
+    end = true;
+    line = 'Thanks so much for your time. One of our advisors will call you back soon. Goodbye!';
+  }
   line = line.replace('[END]', '').trim();
   if (heard || !history.length) history.push({ role: 'ai', text: line });
 
