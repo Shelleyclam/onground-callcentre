@@ -1,27 +1,20 @@
-// Ask Google Gemini for the AI caller's next line.
-// Works with both kinds of Google key:
-//  - AI Studio keys ("AIza..."):     generativelanguage.googleapis.com
-//  - Vertex express keys ("AQ..."): aiplatform.googleapis.com
-const MODEL = 'gemini-2.5-flash';
-
-function endpoint(key) {
-  return key.startsWith('AIza')
-    ? `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`
-    : `https://aiplatform.googleapis.com/v1/publishers/google/models/${MODEL}:generateContent`;
-}
+// Ask Google Gemini (AI Studio API) for the AI caller's next line.
+// Model choice: a "flash-lite" model answers in ~1.5s. A phone call can't wait long:
+// Twilio gives our server about 5 seconds to reply each turn.
+const MODEL = 'gemini-3.1-flash-lite';
+const URL = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
 
 // system: who the AI is. history: [{ role: 'ai' | 'customer', text }]
 export async function nextLine(system, history) {
-  const key = process.env.GEMINI_API_KEY;
-  const res = await fetch(endpoint(key), {
+  const res = await fetch(URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: system }] },
       contents: history.map((m) => ({ role: m.role === 'ai' ? 'model' : 'user', parts: [{ text: m.text }] })),
-      // Short, fast answers: a phone call can't wait long (Twilio gives us ~5 seconds).
-      generationConfig: { maxOutputTokens: 120, temperature: 0.6, thinkingConfig: { thinkingBudget: 0 } },
+      generationConfig: { maxOutputTokens: 120, temperature: 0.6 },
     }),
+    signal: AbortSignal.timeout(4000), // give up before Twilio does, so we can still say sorry
   });
   const body = await res.json();
   if (!res.ok) throw new Error(`Gemini ${res.status}: ${body.error?.message ?? 'request failed'}`);
